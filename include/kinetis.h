@@ -1165,11 +1165,7 @@ enum IRQ_NUMBER_t {
 #define SIM_SOPT9_TPM2CH0SRC(n)		(uint32_t)(((n) & 3) << 20)	// TPM2 channel 0 input capture source select
 #define SIM_SOPT9_TPM1CH0SRC(n)		(uint32_t)(((n) & 3) << 18)	// TPM1 channel 0 input capture source select
 #define SIM_SDID		(*(const uint32_t *)0x40048024)    // System Device Identification Register
-#if defined(__cplusplus)
-#define SIM_SCGC1		(*reinterpret_cast<volatile uint32_t *>(0x40048028)) // System Clock Gating Control Register 1
-#else
-#define SIM_SCGC1		(*(volatile uint32_t *)0x40048028) // System Clock Gating Control Register 1
-#endif
+#define SIM_SCGC1		(*(volatile uint32_t *)((uintptr_t )0x40048028)) // System Clock Gating Control Register 1
 #define SIM_SCGC1_UART5			((uint32_t)0x00000800)		// UART5 Clock Gate Control
 #define SIM_SCGC1_UART4			((uint32_t)0x00000400)		// UART4 Clock Gate Control
 #define SIM_SCGC1_I2C3			((uint32_t)0x00000080)		// I2C3 Clock Gate Control
@@ -1194,7 +1190,7 @@ enum IRQ_NUMBER_t {
 #define SIM_SCGC3_USBHSPHY		((uint32_t)0x00000004)		// USBHSPHY Clock Gate Control
 #define SIM_SCGC3_USBHS			((uint32_t)0x00000002)		// USBHS Clock Gate Control
 //#define SIM_SCGC3_RNGA		((uint32_t)0x00000001)		// RNGA Clock on APIS1 (base addr 400A0000)
-#define SIM_SCGC4		(*(volatile uint32_t *)(reinterpret_cast<uintptr_t>(0x40048034))) // System Clock Gating Control Register 4
+#define SIM_SCGC4		(*(volatile uint32_t *)((uintptr_t)0x40048034)) // System Clock Gating Control Register 4
 #define SIM_SCGC4_VREF			((uint32_t)0x00100000)		// VREF Clock Gate Control
 #define SIM_SCGC4_CMP			((uint32_t)0x00080000)		// Comparator Clock Gate Control
 #define SIM_SCGC4_USBOTG		((uint32_t)0x00040000)		// USB Clock Gate Control
