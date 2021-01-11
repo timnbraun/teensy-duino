@@ -594,11 +594,13 @@ bool AudioControlSGTL5000::volumeInteger(unsigned int n)
 	return write(CHIP_ANA_HP_CTRL, n);  // set volume
 }
 
+#if !defined(KINETISL)
 bool AudioControlSGTL5000::volume(float left, float right)
 {
 	unsigned short m=((0x7F-calcVol(right,0x7F))<<8)|(0x7F-calcVol(left,0x7F));
 	return write(CHIP_ANA_HP_CTRL, m);
 }
+#endif
 
 bool AudioControlSGTL5000::micGain(unsigned int dB)
 {
@@ -686,6 +688,7 @@ unsigned short AudioControlSGTL5000::lineOutLevel(uint8_t left, uint8_t right)
 	return modify(CHIP_LINE_OUT_VOL,(right<<8)|left,(31<<8)|31);
 }
 
+#if !defined(KINETISL)
 unsigned short AudioControlSGTL5000::dacVolume(float n) // set both directly
 {
 	if ((read(CHIP_ADCDAC_CTRL)&(3<<2)) != ((n>0 ? 0:3)<<2)) {
@@ -703,6 +706,7 @@ unsigned short AudioControlSGTL5000::dacVolume(float left, float right)
 	unsigned short m=(0xFC-calcVol(right,0xC0))<<8|(0xFC-calcVol(left,0xC0));
 	return modify(CHIP_DAC_VOL,m,65535);
 }
+#endif
 
 bool AudioControlSGTL5000::dacVolumeRamp()
 {
@@ -758,6 +762,7 @@ unsigned short AudioControlSGTL5000::audioProcessorDisable(void)
 }
 
 
+#if !defined(KINETISL)
 // DAP_PEQ
 unsigned short AudioControlSGTL5000::eqFilterCount(uint8_t n) // valid to n&7, 0 thru 7 filters enabled.
 {
@@ -809,7 +814,9 @@ void AudioControlSGTL5000::eqFilter(uint8_t filterNum, int *filterParameters)
 	write(DAP_COEF_WR_A2_LSB,(*filterParameters++)&15);
 	write(DAP_FILTER_COEF_ACCESS,(uint16_t)0x100|filterNum);
 }
+#endif
 
+#if !defined(KINETISL)
 /* Valid values for dap_avc parameters
 
 	maxGain; Maximum gain that can be applied
@@ -1021,4 +1028,5 @@ void calcBiquad(uint8_t filtertype, float fC, float dB_Gain, float Q, uint32_t q
   a2/=a0;
   *coef++=(int)(a2+0.499);
 }
+#endif
 

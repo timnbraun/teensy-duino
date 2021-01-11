@@ -71,6 +71,7 @@ public:
 	unsigned short audioPreProcessorEnable(void);
 	unsigned short audioPostProcessorEnable(void);
 	unsigned short audioProcessorDisable(void);
+#if !defined(KINETISL)
 	unsigned short eqFilterCount(uint8_t n);
 	unsigned short eqSelect(uint8_t n);
 	unsigned short eqBand(uint8_t bandNum, float n);
@@ -89,6 +90,7 @@ public:
 	unsigned short surroundSoundEnable(void);
 	unsigned short surroundSoundDisable(void);
 	void killAutomation(void) { semi_automated=false; }
+#endif
 
 protected:
 	bool muted;
@@ -102,8 +104,10 @@ protected:
 	unsigned short dap_audio_eq_band(uint8_t bandNum, float n);
 private:
 	bool semi_automated;
+#if !defined(KINETISL)
 	void automate(uint8_t dap, uint8_t eq);
 	void automate(uint8_t dap, uint8_t eq, uint8_t filterCount);
+#endif
 };
 
 //For Filter Type: 0 = LPF, 1 = HPF, 2 = BPF, 3 = NOTCH, 4 = PeakingEQ, 5 = LowShelf, 6 = HighShelf
