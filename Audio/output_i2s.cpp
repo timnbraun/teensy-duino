@@ -42,6 +42,9 @@ DMAMEM __attribute__((aligned(32))) static uint32_t i2s_tx_buffer[AUDIO_BLOCK_SA
 #include "utility/imxrt_hw.h"
 #endif
 
+// high-level explanation of how this I2S & DMA code works:
+// https://forum.pjrc.com/threads/65229?p=263104&viewfull=1#post263104
+
 void AudioOutputI2S::begin(void)
 {
 	dma.begin(true); // Allocate the DMA channel first
@@ -67,6 +70,29 @@ void AudioOutputI2S::begin(void)
 	dma.TCD->CSR = DMA_TCD_CSR_INTHALF | DMA_TCD_CSR_INTMAJOR;
 	dma.triggerAtHardwareEvent(DMAMUX_SOURCE_I2S0_TX);
 	dma.enable();
+
+	I2S0_TCSR = I2S_TCSR_SR;
+	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE;
+
+#elif defined(KINETISL)
+
+	SIM_SCGC6 |= SIM_SCGC6_I2S;
+	I2S0_MCR = I2S_MCR_MICS(0) | I2S_MCR_MOE;
+	// I2S0_MDR has no effect on Teensy LC
+	// CORE_PIN11_CONFIG = PORT_PCR_MUX(6);
+
+	// configure transmitter
+	I2S0_TMR = 0;
+	I2S0_TCR1 = I2S_TCR1_TFW(0);  // watermark at half fifo size
+	I2S0_TCR2 = I2S_TCR2_SYNC(0) | I2S_TCR2_BCP | I2S_TCR2_MSEL(1)
+			| I2S_TCR2_BCD | I2S_TCR2_DIV(16);
+	I2S0_TCR3 = I2S_TCR3_TCE;
+	I2S0_TCR4 = I2S_TCR4_FRSZ(1) | I2S_TCR4_SYWD(15) | I2S_TCR4_MF
+			| I2S_TCR4_FSE | I2S_TCR4_FSP | I2S_TCR4_FSD;
+	I2S0_TCR5 = I2S_TCR5_WNW(15) | I2S_TCR5_W0W(15) | I2S_TCR5_FBT(15);
+
+	// CORE_PIN23_CONFIG = PORT_PCR_MUX(6); // pin 23, PTC2, I2S0_TX_FS (LRCLK)
+	// CORE_PIN9_CONFIG  = PORT_PCR_MUX(6); // pin  9, PTC3, I2S0_TX_BCLK
 
 	I2S0_TCSR = I2S_TCSR_SR;
 	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE;
