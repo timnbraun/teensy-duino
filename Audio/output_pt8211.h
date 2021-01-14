@@ -79,6 +79,7 @@ public:
 	AudioOutputPT8211(void) : AudioStream(2, inputQueueArray) { begin(); }
 	virtual void update(void);
 	void begin(void);
+	uint32_t isrCount();
 	
 protected:	
 	static audio_block_t *block_left;
@@ -90,6 +91,7 @@ protected:
 	static void isr2(void);
 	static bool update_responsibility;	
 };
+
 
 #endif
 

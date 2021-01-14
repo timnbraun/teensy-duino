@@ -579,6 +579,8 @@ DMAMEM static int16_t i2s_tx_buffer2[NUM_SAMPLES*2];
 DMAChannel AudioOutputPT8211::dma1(false);
 DMAChannel AudioOutputPT8211::dma2(false);
 
+static uint32_t isr_count;
+uint32_t AudioOutputPT8211::isrCount() { return ::isr_count; }
 
 void AudioOutputPT8211::begin(void)
 {
@@ -628,7 +630,6 @@ void AudioOutputPT8211::begin(void)
 
 	I2S0_TCSR = I2S_TCSR_SR;
 	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FWDE;
-
 }
 
 void AudioOutputPT8211::update(void)
@@ -696,6 +697,7 @@ void AudioOutputPT8211::isr1(void)
 	dma1.clearInterrupt();
 	dma1.sourceBuffer(i2s_tx_buffer1, sizeof(i2s_tx_buffer1));
 	interleave(&i2s_tx_buffer1[0], AudioOutputPT8211::block_left, AudioOutputPT8211::block_right, 0);
+	::isr_count++;
 }
 
 void AudioOutputPT8211::isr2(void) 
@@ -721,7 +723,9 @@ void AudioOutputPT8211::isr2(void)
 	AudioOutputPT8211::block_right = nullptr;
 
 	if (AudioOutputPT8211::update_responsibility) AudioStream::update_all();
+	::isr_count++;
 }
+
 
 #else
 //#error Output PT8211: No code for this CPU
