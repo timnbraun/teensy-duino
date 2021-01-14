@@ -37,6 +37,7 @@ public:
 	AudioOutputI2S(void) : AudioStream(2, inputQueueArray) { begin(); }
 	virtual void update(void);
 	void begin(void);
+	uint32_t isrCount();
 	friend class AudioInputI2S;
 #if defined(__IMXRT1062__)
 	friend class AudioOutputI2SQuad;
@@ -49,16 +50,27 @@ public:
 protected:
 	AudioOutputI2S(int dummy): AudioStream(2, inputQueueArray) {} // to be used only inside AudioOutputI2Sslave !!
 	static void config_i2s(void);
+	static bool update_responsibility;
+#if !defined(KINETISL)
 	static audio_block_t *block_left_1st;
 	static audio_block_t *block_right_1st;
-	static bool update_responsibility;
 	static DMAChannel dma;
 	static void isr(void);
+#else
+	static audio_block_t *block_left;
+	static audio_block_t *block_right;
+	static DMAChannel dma1;
+	static DMAChannel dma2;
+	static void isr1(void);
+	static void isr2(void);
+#endif
 private:
+#if !defined(KINETISL)
 	static audio_block_t *block_left_2nd;
 	static audio_block_t *block_right_2nd;
 	static uint16_t block_left_offset;
 	static uint16_t block_right_offset;
+#endif
 	audio_block_t *inputQueueArray[2];
 };
 
