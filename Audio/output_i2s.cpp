@@ -28,15 +28,27 @@
 #include "output_i2s.h"
 #include "memcpy_audio.h"
 
+#if !defined(KINETISL)
 audio_block_t * AudioOutputI2S::block_left_1st = NULL;
 audio_block_t * AudioOutputI2S::block_right_1st = NULL;
 audio_block_t * AudioOutputI2S::block_left_2nd = NULL;
 audio_block_t * AudioOutputI2S::block_right_2nd = NULL;
 uint16_t  AudioOutputI2S::block_left_offset = 0;
 uint16_t  AudioOutputI2S::block_right_offset = 0;
-bool AudioOutputI2S::update_responsibility = false;
 DMAChannel AudioOutputI2S::dma(false);
+#else
+#define NUM_SAMPLES (AUDIO_BLOCK_SAMPLES / 2)
+audio_block_t * AudioOutputI2S::block_left = NULL;
+audio_block_t * AudioOutputI2S::block_right = NULL;
+DMAChannel AudioOutputI2S::dma1(false);
+DMAChannel AudioOutputI2S::dma2(false);
+#endif
+bool AudioOutputI2S::update_responsibility = false;
+
 DMAMEM __attribute__((aligned(32))) static uint32_t i2s_tx_buffer[AUDIO_BLOCK_SAMPLES];
+
+static volatile uint32_t	isr_count = 0;
+uint32_t AudioOutputI2S::isrCount() { return ::isr_count; }
 
 #if defined(__IMXRT1062__)
 #include "utility/imxrt_hw.h"
@@ -47,12 +59,18 @@ DMAMEM __attribute__((aligned(32))) static uint32_t i2s_tx_buffer[AUDIO_BLOCK_SA
 
 void AudioOutputI2S::begin(void)
 {
+	dbg("AudioOutputI2S::begin()\r\n");
+
+	memset(i2s_tx_buffer, 0, sizeof( i2s_tx_buffer ) );
+#if !defined(KINETISL)
 	dma.begin(true); // Allocate the DMA channel first
 
 	block_left_1st = NULL;
 	block_right_1st = NULL;
 
 	config_i2s();
+	update_responsibility = update_setup();
+#endif
 
 #if defined(KINETISK)
 	CORE_PIN22_CONFIG = PORT_PCR_MUX(6); // pin 22, PTC1, I2S0_TXD0
@@ -74,28 +92,58 @@ void AudioOutputI2S::begin(void)
 	I2S0_TCSR = I2S_TCSR_SR;
 	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE;
 
+	dma.attachInterrupt(isr);
+
 #elif defined(KINETISL)
 
-	SIM_SCGC6 |= SIM_SCGC6_I2S;
+	dma1.begin(true); // Allocate the DMA channel first
+	dma2.begin(true);
+
+	SIM_SCGC6 |= SIM_SCGC6_I2S;//Enable I2S periphal
+
+	// enable MCLK
 	I2S0_MCR = I2S_MCR_MICS(0) | I2S_MCR_MOE;
-	// I2S0_MDR has no effect on Teensy LC
-	// CORE_PIN11_CONFIG = PORT_PCR_MUX(6);
+	//MDR is not available on Teensy LC
 
 	// configure transmitter
 	I2S0_TMR = 0;
-	I2S0_TCR1 = I2S_TCR1_TFW(0);  // watermark at half fifo size
-	I2S0_TCR2 = I2S_TCR2_SYNC(0) | I2S_TCR2_BCP | I2S_TCR2_MSEL(1)
-			| I2S_TCR2_BCD | I2S_TCR2_DIV(16);
+	I2S0_TCR1 = I2S_TCR1_TFW(0);
+	I2S0_TCR2 = I2S_TCR2_SYNC(0) | I2S_TCR2_BCP | I2S_TCR2_MSEL(1) |
+		I2S_TCR2_BCD | I2S_TCR2_DIV(16);
 	I2S0_TCR3 = I2S_TCR3_TCE;
-	I2S0_TCR4 = I2S_TCR4_FRSZ(1) | I2S_TCR4_SYWD(15) | I2S_TCR4_MF
-			| I2S_TCR4_FSE | I2S_TCR4_FSP | I2S_TCR4_FSD;
+	I2S0_TCR4 = I2S_TCR4_FRSZ(1) | I2S_TCR4_SYWD(15) |
+		I2S_TCR4_MF /*| I2S_TCR4_FSE*/ | I2S_TCR4_FSP | I2S_TCR4_FSD;
 	I2S0_TCR5 = I2S_TCR5_WNW(15) | I2S_TCR5_W0W(15) | I2S_TCR5_FBT(15);
 
-	// CORE_PIN23_CONFIG = PORT_PCR_MUX(6); // pin 23, PTC2, I2S0_TX_FS (LRCLK)
-	// CORE_PIN9_CONFIG  = PORT_PCR_MUX(6); // pin  9, PTC3, I2S0_TX_BCLK
+	// configure pin mux
+	CORE_PIN22_CONFIG = PORT_PCR_MUX(6); // pin 22, PTC1, I2S0_TXD0
+	CORE_PIN23_CONFIG = PORT_PCR_MUX(6); // pin 23, PTC2, I2S0_TX_FS (LRCLK)
+	CORE_PIN9_CONFIG  = PORT_PCR_MUX(6); // pin  9, PTC3, I2S0_TX_BCLK //5.6MHz(44117HZ)
+	// CORE_PIN11_CONFIG = PORT_PCR_MUX(6); // pin 11, PTC6, I2S0_MCLK
+
+	// configure both DMA channels
+	dma1.sourceBuffer(reinterpret_cast<uint16_t *>(i2s_tx_buffer),
+		sizeof(i2s_tx_buffer)/2);
+	dma1.destination(*(int16_t *)&I2S0_TDR0);
+	dma1.triggerAtHardwareEvent(DMAMUX_SOURCE_I2S0_TX);
+	dma1.interruptAtCompletion();
+	dma1.disableOnCompletion();
+	dma1.attachInterrupt(isr1);
+
+	dma2.sourceBuffer(reinterpret_cast<uint16_t *>(&i2s_tx_buffer[NUM_SAMPLES]),
+		sizeof(i2s_tx_buffer)/2);
+	dma2.destination(*(int16_t *)&I2S0_TDR0);
+	dma2.interruptAtCompletion();
+	dma2.disableOnCompletion();
+	dma2.attachInterrupt(isr2);
+
+	update_responsibility = update_setup();
+	dma1.enable();
 
 	I2S0_TCSR = I2S_TCSR_SR;
-	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE;
+	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FWDE;
+
+	dbg("AudioOutputI2S::begin()\r\n");
 
 #elif defined(__IMXRT1062__)
 	CORE_PIN7_CONFIG  = 3;  //1:TX_DATA0
@@ -115,12 +163,12 @@ void AudioOutputI2S::begin(void)
 
 	I2S1_RCSR |= I2S_RCSR_RE | I2S_RCSR_BCE;
 	I2S1_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE;
-#endif
-	update_responsibility = update_setup();
 	dma.attachInterrupt(isr);
+#endif
 }
 
 
+#if !defined(KINETISL)
 void AudioOutputI2S::isr(void)
 {
 #if defined(KINETISK) || defined(__IMXRT1062__)
@@ -247,9 +295,106 @@ void AudioOutputI2S::isr(void)
 		} while (dest < end);
 	}
 #endif
+	::isr_count++;
 }
 
+#else // defined(KINETISL)
 
+inline __attribute__((always_inline, hot))
+void interleave(uint32_t *dest,
+	const audio_block_t *block_left,
+	const audio_block_t *block_right, const size_t offset)
+{
+
+	uint32_t *p = dest;
+	uint32_t *end = p + NUM_SAMPLES;
+
+	if (block_left != nullptr && block_right != nullptr) {
+		int16_t *l = (int16_t*)&block_left->data[offset];
+		int16_t *r = (int16_t*)&block_right->data[offset];
+		do {
+			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
+			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
+			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
+			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
+		} while (p < end);
+		return;
+	}
+
+	if (block_left != nullptr) {
+		int16_t *l = (int16_t*)&block_left->data[offset];
+		do {
+			*p++ = (uint32_t)(*l++) << 16;
+			*p++ = (uint32_t)(*l++) << 16;
+			*p++ = (uint32_t)(*l++) << 16;
+			*p++ = (uint32_t)(*l++) << 16;
+		} while (p < end);
+		return;
+	}
+
+	if (block_right != nullptr) {
+		int16_t *r = (int16_t*)&block_right->data[offset];
+		do {
+			*p++ =(uint32_t)(*r++);
+			*p++ =(uint32_t)(*r++);
+			*p++ =(uint32_t)(*r++);
+			*p++ =(uint32_t)(*r++);
+		} while (p < end);
+		return;
+	}
+
+	do {
+		*p++ = 0;
+		*p++ = 0;
+	} while (p < end);
+
+}
+
+// DMA Channel 1 Interrupt
+void AudioOutputI2S::isr1(void)
+{
+	//Start Channel 2:
+	dma2.triggerAtHardwareEvent(DMAMUX_SOURCE_I2S0_TX);
+	dma2.enable();
+
+	//Reset & Copy Data Channel 1
+	dma1.clearInterrupt();
+	// Channel 1 uses first half of tx buffer
+	dma1.sourceBuffer(reinterpret_cast<uint16_t *>(i2s_tx_buffer),
+		sizeof(i2s_tx_buffer)/2);
+	interleave(&i2s_tx_buffer[0], AudioOutputI2S::block_left, AudioOutputI2S::block_right, 0);
+	::isr_count++;
+}
+
+// DMA Channel 2 Interrupt
+void AudioOutputI2S::isr2(void)
+{
+	// Start Channel 1:
+	dma1.triggerAtHardwareEvent(DMAMUX_SOURCE_I2S0_TX);
+	dma1.enable();
+
+	// Reset & Copy Data Channel 2
+	dma2.clearInterrupt();
+	dma2.sourceBuffer(reinterpret_cast<uint16_t *>(&i2s_tx_buffer[NUM_SAMPLES]),
+		sizeof(i2s_tx_buffer)/2);
+
+	audio_block_t *block_left = AudioOutputI2S::block_left;
+	audio_block_t *block_right = AudioOutputI2S::block_right;
+
+	// Channel 2 uses top half of tx buffer
+	interleave(&i2s_tx_buffer[NUM_SAMPLES], block_left, block_right, NUM_SAMPLES);
+
+	if (block_left) AudioStream::release(block_left);
+	if (block_right) AudioStream::release(block_right);
+
+	AudioOutputI2S::block_left = nullptr;
+	AudioOutputI2S::block_right = nullptr;
+
+	if (AudioOutputI2S::update_responsibility) AudioStream::update_all();
+
+	::isr_count++;
+}
+#endif
 
 
 void AudioOutputI2S::update(void)
@@ -259,6 +404,7 @@ void AudioOutputI2S::update(void)
 	//audio_block_t *block = receiveReadOnly();
 	//if (block) release(block);
 
+#if !defined(KINETISL)
 	audio_block_t *block;
 	block = receiveReadOnly(0); // input 0 = left channel
 	if (block) {
@@ -298,6 +444,10 @@ void AudioOutputI2S::update(void)
 			release(tmp);
 		}
 	}
+#else
+	if (!block_left)  block_left  = receiveReadOnly(0);	// input 0 = left channel
+	if (!block_right) block_right = receiveReadOnly(1);	// input 1 = right channel
+#endif
 }
 
 #if defined(KINETISK) || defined(KINETISL)
@@ -457,6 +607,7 @@ void AudioOutputI2S::config_i2s(void)
 #endif
 }
 
+#if !defined(KINETISL)
 
 /******************************************************************/
 
@@ -591,3 +742,4 @@ void AudioOutputI2Sslave::config_i2s(void)
 
 #endif
 }
+#endif
