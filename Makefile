@@ -4,7 +4,7 @@
 MCU = MKL26Z64
 CPUARCH = cortex-m0plus
 
-LIBRARYPATH = ../teensyduino
+LIBRARYPATH = $(PWD)
 MCU_LD = $(LIBRARYPATH)/mkl26z64.ld
 LIBS = -L$(LIBRARYPATH) -lteensy
 
