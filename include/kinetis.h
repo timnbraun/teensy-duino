@@ -5873,4 +5873,8 @@ static inline void arm_dcache_flush_delete(void *addr, uint32_t size) { }
 
 #undef BEGIN_ENUM
 #undef END_ENUM
+
+#define dbg(...) \
+	fiprintf(stderr, __VA_ARGS__)
+
 #endif
