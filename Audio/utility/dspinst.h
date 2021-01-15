@@ -320,7 +320,11 @@ static inline int32_t multiply_16tx16t(uint32_t a, uint32_t b) __attribute__((al
 static inline int32_t multiply_16tx16t(uint32_t a, uint32_t b)
 {
 	int32_t out;
+#if defined (__ARM_ARCH_7EM__)
 	asm volatile("smultt %0, %1, %2" : "=r" (out) : "r" (a), "r" (b));
+#elif defined(KINETISL)
+	out = (a >> 16) * (b >> 16);
+#endif
 	return out;
 }
 
