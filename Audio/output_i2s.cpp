@@ -112,14 +112,14 @@ void AudioOutputI2S::begin(void)
 		I2S_TCR2_BCD | I2S_TCR2_DIV(16);
 	I2S0_TCR3 = I2S_TCR3_TCE;
 	I2S0_TCR4 = I2S_TCR4_FRSZ(1) | I2S_TCR4_SYWD(15) |
-		I2S_TCR4_MF /*| I2S_TCR4_FSE*/ | I2S_TCR4_FSP | I2S_TCR4_FSD;
+		I2S_TCR4_MF | I2S_TCR4_FSE | I2S_TCR4_FSP | I2S_TCR4_FSD;
 	I2S0_TCR5 = I2S_TCR5_WNW(15) | I2S_TCR5_W0W(15) | I2S_TCR5_FBT(15);
 
 	// configure pin mux
 	CORE_PIN22_CONFIG = PORT_PCR_MUX(6); // pin 22, PTC1, I2S0_TXD0
 	CORE_PIN23_CONFIG = PORT_PCR_MUX(6); // pin 23, PTC2, I2S0_TX_FS (LRCLK)
 	CORE_PIN9_CONFIG  = PORT_PCR_MUX(6); // pin  9, PTC3, I2S0_TX_BCLK //5.6MHz(44117HZ)
-	// CORE_PIN11_CONFIG = PORT_PCR_MUX(6); // pin 11, PTC6, I2S0_MCLK
+	CORE_PIN11_CONFIG = PORT_PCR_MUX(6); // pin 11, PTC6, I2S0_MCLK
 
 	// configure both DMA channels
 	dma1.sourceBuffer(reinterpret_cast<uint16_t *>(i2s_tx_buffer),
@@ -310,35 +310,35 @@ void interleave(uint32_t *dest,
 	uint32_t *end = p + NUM_SAMPLES;
 
 	if (block_left != nullptr && block_right != nullptr) {
-		int16_t *l = (int16_t*)&block_left->data[offset];
-		int16_t *r = (int16_t*)&block_right->data[offset];
+		const uint16_t *l = (const uint16_t *)&block_left->data[offset];
+		const uint16_t *r = (const uint16_t *)&block_right->data[offset];
 		do {
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
+			*p++ = (((uint32_t)(*l++)) << 16) | *r++;
+			*p++ = (((uint32_t)(*l++)) << 16) | *r++;
+			*p++ = (((uint32_t)(*l++)) << 16) | *r++;
+			*p++ = (((uint32_t)(*l++)) << 16) | *r++;
 		} while (p < end);
 		return;
 	}
 
 	if (block_left != nullptr) {
-		int16_t *l = (int16_t*)&block_left->data[offset];
+		const uint16_t *l = (const uint16_t *)&block_left->data[offset];
 		do {
-			*p++ = (uint32_t)(*l++) << 16;
-			*p++ = (uint32_t)(*l++) << 16;
-			*p++ = (uint32_t)(*l++) << 16;
-			*p++ = (uint32_t)(*l++) << 16;
+			*p++ = (uint32_t )(*l++) << 16;
+			*p++ = (uint32_t )(*l++) << 16;
+			*p++ = (uint32_t )(*l++) << 16;
+			*p++ = (uint32_t )(*l++) << 16;
 		} while (p < end);
 		return;
 	}
 
 	if (block_right != nullptr) {
-		int16_t *r = (int16_t*)&block_right->data[offset];
+		const uint16_t *r = (const uint16_t *)&block_right->data[offset];
 		do {
-			*p++ =(uint32_t)(*r++);
-			*p++ =(uint32_t)(*r++);
-			*p++ =(uint32_t)(*r++);
-			*p++ =(uint32_t)(*r++);
+			*p++ = *r++;
+			*p++ = *r++;
+			*p++ = *r++;
+			*p++ = *r++;
 		} while (p < end);
 		return;
 	}
