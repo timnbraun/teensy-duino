@@ -33,29 +33,30 @@ extern "C" {
 extern const int16_t AudioWaveformSine[257];
 }
 
-
 void AudioSynthWaveformSine::update(void)
 {
 	audio_block_t *block;
-	uint32_t i, ph, inc, index, scale;
-	int32_t val1, val2;
+	uint32_t ph, inc, index, scale;
 
 	if (magnitude) {
 		block = allocate();
 		if (block) {
 			ph = phase_accumulator;
 			inc = phase_increment;
-			for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+			for (int i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+				int32_t val1, val2;
 				index = ph >> 24;
 				val1 = AudioWaveformSine[index];
 				val2 = AudioWaveformSine[index+1];
 				scale = (ph >> 8) & 0xFFFF;
 				val2 *= scale;
-				val1 *= 0x10000 - scale;
+				val1 *= (0x10000 - scale);
 #if defined(__ARM_ARCH_7EM__)
 				block->data[i] = multiply_32x32_rshift32(val1 + val2, magnitude);
 #elif defined(KINETISL)
 				block->data[i] = (((val1 + val2) >> 16) * magnitude) >> 16;
+#else
+#error("Unsupported architecture")
 #endif
 				ph += inc;
 			}
@@ -66,6 +67,7 @@ void AudioSynthWaveformSine::update(void)
 		}
 	}
 	phase_accumulator += phase_increment * AUDIO_BLOCK_SAMPLES;
+
 }
 
 
