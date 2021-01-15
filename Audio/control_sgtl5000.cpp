@@ -518,6 +518,7 @@ bool AudioControlSGTL5000::enable(void)
 	//delay(5);
 	//unsigned int n = read(CHIP_ID);
 	//Serial.println(n, HEX);
+	dbg("SGTL5000 chip ID = 0x%x\r\n", read(CHIP_ID));
 
 	int r = write(CHIP_ANA_POWER, 0x4060);  // VDDD is externally driven with 1.8V
 	if (!r) return false;
@@ -549,8 +550,14 @@ unsigned int AudioControlSGTL5000::read(unsigned int reg)
 	Wire.beginTransmission(i2c_addr);
 	Wire.write(reg >> 8);
 	Wire.write(reg);
-	if (Wire.endTransmission(false) != 0) return 0;
-	if (Wire.requestFrom((int)i2c_addr, 2) < 2) return 0;
+	if (Wire.endTransmission(false) != 0) {
+		dbg("AudioControlSGTL5000::read(0x%x) 0x%x write failed\r\n", reg, i2c_addr);
+		return 0;
+	}
+	if (Wire.requestFrom((int)i2c_addr, 2) < 2) {
+		dbg("AudioControlSGTL5000::read() failed requestFrom()\r\n");
+		return 0;
+	}
 	val = Wire.read() << 8;
 	val |= Wire.read();
 	return val;
