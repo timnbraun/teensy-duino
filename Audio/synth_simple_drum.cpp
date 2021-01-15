@@ -106,10 +106,9 @@ void AudioSynthSimpleDrum::pitchMod(float depth)
 }
 
 
-
 void AudioSynthSimpleDrum::update(void)
 {
-#if defined(KINETISK) || defined(__IMXRT1062__)
+#if defined(KINETISK) || defined(__IMXRT1062__) || defined(KINETISL)
   audio_block_t *block_wav;
   int16_t *p_wave, *end;
   int32_t sin_l, sin_r, interp, mod, mod2, delta;
