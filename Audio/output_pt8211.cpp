@@ -48,7 +48,9 @@ DMAChannel AudioOutputPT8211::dma(false);
 
 void AudioOutputPT8211::begin(void)
 {
+
 	memset(i2s_tx_buffer, 0, sizeof(i2s_tx_buffer));
+
 	dma.begin(true); // Allocate the DMA channel first
 
 	block_left_1st = NULL;
@@ -238,7 +240,7 @@ void AudioOutputPT8211::isr(void)
 					oldL = val;
 				}
 			#elif defined(AUDIO_PT8211_INTERPOLATION_CIC)
-				for (int i=0; i< AUDIO_BLOCK_SAMPLES / 2; i++, offsetL++, offsetR++) {
+				for (int i=0; i< AUDIO_BLOCK_SAMPLES / 2; i++, offsetL++) {
 					int32_t valL = blockL->data[offsetL];
 
 					int32_t combL[3] = {0};
@@ -297,7 +299,7 @@ void AudioOutputPT8211::isr(void)
 					oldR = val;
 				}
 			#elif defined(AUDIO_PT8211_INTERPOLATION_CIC)
-				for (int i=0; i< AUDIO_BLOCK_SAMPLES / 2; i++, offsetL++, offsetR++) {
+				for (int i=0; i< AUDIO_BLOCK_SAMPLES / 2; i++, offsetR++) {
 					int32_t valR = blockR->data[offsetR];
 
 					int32_t combR[3] = {0};
@@ -646,19 +648,19 @@ void interleave(const int16_t *dest,const audio_block_t *block_left, const audio
 	uint32_t *end = p + NUM_SAMPLES;
 
 	if (block_left != nullptr && block_right != nullptr) {
-		int16_t *l = (int16_t*)&block_left->data[offset];
-		int16_t *r = (int16_t*)&block_right->data[offset];
+		uint16_t *l = (uint16_t*)&block_left->data[offset];
+		uint16_t *r = (uint16_t*)&block_right->data[offset];
 		do {
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
-			*p++ = (uint32_t)(*l++) << 16 | (uint32_t)(*r++);
+			*p++ = (((uint32_t)(*l++)) << 16)  | (uint32_t)(*r++);
+			*p++ = (((uint32_t)(*l++)) << 16)  | (uint32_t)(*r++);
+			*p++ = (((uint32_t)(*l++)) << 16)  | (uint32_t)(*r++);
+			*p++ = (((uint32_t)(*l++)) << 16)  | (uint32_t)(*r++);
 		} while (p < end);
 		return;
 	}
 
 	if (block_left != nullptr) {
-		int16_t *l = (int16_t*)&block_left->data[offset];
+		uint16_t *l = (uint16_t*)&block_left->data[offset];
 		do {
 			*p++ = (uint32_t)(*l++) << 16;
 			*p++ = (uint32_t)(*l++) << 16;
@@ -669,7 +671,7 @@ void interleave(const int16_t *dest,const audio_block_t *block_left, const audio
 	}
 
 	if (block_right != nullptr) {
-		int16_t *r = (int16_t*)&block_right->data[offset];
+		uint16_t *r = (uint16_t*)&block_right->data[offset];
 		do {
 			*p++ =(uint32_t)(*r++);
 			*p++ =(uint32_t)(*r++);
