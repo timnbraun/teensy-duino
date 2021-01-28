@@ -1,5 +1,8 @@
 #
-# Makefile for teensykick
+# Makefile for teensy-duino
+#
+# Default MCU is for teensyLC
+#
 
 MCU = MKL26Z64
 CPUARCH = cortex-m0plus
