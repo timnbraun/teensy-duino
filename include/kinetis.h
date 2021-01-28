@@ -5877,4 +5877,7 @@ static inline void arm_dcache_flush_delete(void *addr, uint32_t size) { }
 #define dbg(...) \
 	fiprintf(stderr, __VA_ARGS__)
 
+#define dbgln(s) \
+	fiprintf(stderr, s "\n")
+
 #endif
