@@ -50,25 +50,32 @@ clean:
 $(OBJ_DIR): ; $(MKDIR) $@
 
 $(OBJ_DIR)/%.o : src/%.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : src/%.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : Audio/%.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : Audio/%.cpp
-	$(CXX) $(CPPFLAGS) -IWire $(CXXFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CXX) $(CPPFLAGS) -IWire $(CXXFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : Bounce/%.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : SPI/%.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : Wire/%.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	@echo Compiling $@ from $<
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 LIB_C_FILES = analog.c mk20dx128.c nonstd.c pins_teensy.c
 LIB_C_FILES += usb_desc.c usb_dev.c usb_mem.c usb_midi.c usb_seremu.c usb_serial.c
@@ -98,16 +105,21 @@ LIB_OBJS := $(addprefix $(OBJ_DIR)/,$(LIB_OBJS))
 -include $(LIB_OBJS:.o=.d)
 
 $(TEENSY_LIB): $(OBJ_DIR) $(LIB_OBJS)
+	@echo Collecting library $@
 	$(AR) crvs $@ $(LIB_OBJS)
 
 $(AUDIO_LIB): $(OBJ_DIR) $(AUDIO_OBJS)
+	@echo Collecting library $@
 	$(AR) crvs $@ $(AUDIO_OBJS)
 
 $(BOUNCE_LIB): $(OBJ_DIR) $(BOUNCE_OBJS)
+	@echo Collecting library $@
 	$(AR) crvs $@ $(BOUNCE_OBJS)
 
 $(SPI_LIB): $(OBJ_DIR) $(SPI_OBJS)
+	@echo Collecting library $@
 	$(AR) crvs $@ $(SPI_OBJS)
 
 $(WIRE_LIB): $(OBJ_DIR) $(WIRE_OBJS)
+	@echo Collecting library $@
 	$(AR) crvs $@ $(WIRE_OBJS)
