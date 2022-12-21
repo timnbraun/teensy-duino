@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 // some libraries and sketches depend on this
 // AVR stuff, assuming Arduino.h or WProgram.h
@@ -52,30 +53,25 @@
 
 #include "avr_emulation.h"
 #include "usb_serial.h"
-#if 0
 #include "usb_serial2.h"
 #include "usb_serial3.h"
-#endif
 #include "usb_seremu.h"
-#if 0
 #include "usb_keyboard.h"
 #include "usb_mouse.h"
 #include "usb_joystick.h"
-#endif
 #include "usb_midi.h"
 #include "usb_rawhid.h"
-#if 0
 #include "usb_flightsim.h"
 #include "usb_mtp.h"
 #include "usb_audio.h"
 #include "usb_touch.h"
-#endif
 #include "usb_undef.h" // do not allow usb_desc.h stuff to leak to user programs
 
 #include "WCharacter.h"
 #include "WString.h"
 #include "elapsedMillis.h"
 #include "IntervalTimer.h"
+#include "CrashReport.h"
 
 uint16_t makeWord(uint16_t w);
 uint16_t makeWord(byte h, byte l);
@@ -94,9 +90,9 @@ int32_t random(int32_t howsmall, int32_t howbig);
 void randomSeed(uint32_t newseed);
 void srandom(unsigned int newseed);
 
-#endif // __cplusplus
-
 #include "pins_arduino.h"
+
+#endif // __cplusplus
 
 
 // Fast memcpy
