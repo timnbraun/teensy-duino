@@ -27,22 +27,22 @@ $(TEENSY_LIB): $(LIB_OBJS) | ${LIBDIR}
 	@$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
 
 AUDIO_LIB_CPP_FILES = control_sgtl5000.cpp effect_multiply.cpp filter_biquad.cpp \
-	mixer.cpp output_i2s.cpp output_pt8211.cpp play_memory.cpp synth_dc.cpp \
-	synth_simple_drum.cpp synth_sine.cpp synth_whitenoise.cpp
+	mixer.cpp output_i2s.cpp output_pt8211.cpp play_memory.cpp play_memory2.cpp \
+	synth_dc.cpp synth_simple_drum.cpp synth_sine.cpp synth_whitenoise.cpp
 AUDIO_LIB_C_FILES = data_ulaw.c data_waveforms.c
 AUDIO_LIB_S_FILES = memcpy_audio.S
 AUDIO_OBJS := $(addprefix $(LIBOBJDIR)/,$(AUDIO_LIB_C_FILES:.c=.o) \
 	$(AUDIO_LIB_CPP_FILES:.cpp=.o) $(AUDIO_LIB_S_FILES:.S=.o))
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Audio/%.c
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Audio/%.c | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.c) $(OUTPUT_OPTION) $<
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Audio/%.S
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Audio/%.S | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.S) $(OUTPUT_OPTION) $<
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Audio/%.cpp
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Audio/%.cpp | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
@@ -55,11 +55,11 @@ BOUNCE_LIB_C_FILES =
 BOUNCE_OBJS := $(addprefix $(LIBOBJDIR)/,$(BOUNCE_LIB_C_FILES:.c=.o) \
 	$(BOUNCE_LIB_CPP_FILES:.cpp=.o))
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Bounce/%.c
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Bounce/%.c | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.c) $(OUTPUT_OPTION) $<
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Bounce/%.cpp
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Bounce/%.cpp | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
@@ -72,11 +72,11 @@ WIRE_LIB_C_FILES =
 WIRE_OBJS := $(addprefix $(LIBOBJDIR)/,$(WIRE_LIB_C_FILES:.c=.o) \
 	$(WIRE_LIB_CPP_FILES:.cpp=.o))
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Wire/%.c
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Wire/%.c | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.c) $(OUTPUT_OPTION) $<
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Wire/%.cpp
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/Wire/%.cpp | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
@@ -87,11 +87,11 @@ $(WIRE_LIB): $(WIRE_OBJS) | ${LIBDIR}
 SD_LIB_CPP_FILES = File.cpp SD.cpp Sd2Card.cpp SdFile.cpp SdVolume.cpp
 SD_OBJS := $(addprefix $(LIBOBJDIR)/,$(SD_LIB_CPP_FILES:.cpp=.o))
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/SD/%.cpp
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/SD/%.cpp | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/SD/utility/%.cpp
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/SD/utility/%.cpp | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.cpp) -I$(LIBRARYPATH)/SD/utility $(OUTPUT_OPTION) $<
 
@@ -102,7 +102,7 @@ $(SD_LIB): $(SD_OBJS) | ${LIBDIR}
 SPI_LIB_CPP_FILES = SPI.cpp
 SPI_OBJS := $(addprefix $(LIBOBJDIR)/,$(SPI_LIB_CPP_FILES:.cpp=.o))
 
-$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/SPI/%.cpp
+$(LIBOBJDIR)/%.o : $(LIBRARYPATH)/SPI/%.cpp | $(LIBOBJDIR)
 	@echo Compiling $@ from $<
 	@$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
