@@ -114,11 +114,7 @@ protected:
 	AudioStream::initialize_memory(data, num); \
 })
 
-#if defined(KINETISK)
 #define CYCLE_COUNTER_APPROX_PERCENT(n) (((n) + (F_CPU / 32 / AUDIO_SAMPLE_RATE * AUDIO_BLOCK_SAMPLES / 100)) / (F_CPU / 16 / AUDIO_SAMPLE_RATE * AUDIO_BLOCK_SAMPLES / 100))
-#elif defined(KINETISL)
-#define CYCLE_COUNTER_APPROX_PERCENT(n) ((n) * (int)(AUDIO_SAMPLE_RATE) + (int)(AUDIO_SAMPLE_RATE/2)) / (AUDIO_BLOCK_SAMPLES * 10000)
-#endif
 
 #define AudioProcessorUsage() (CYCLE_COUNTER_APPROX_PERCENT(AudioStream::cpu_cycles_total))
 #define AudioProcessorUsageMax() (CYCLE_COUNTER_APPROX_PERCENT(AudioStream::cpu_cycles_total_max))
@@ -156,7 +152,6 @@ public:
 	int processorUsageMax(void) { return CYCLE_COUNTER_APPROX_PERCENT(cpu_cycles_max); }
 	void processorUsageMaxReset(void) { cpu_cycles_max = cpu_cycles; }
 	bool isActive(void) { return active; }
-	uint32_t isrCount() { return isr_count; }
 	uint16_t cpu_cycles;
 	uint16_t cpu_cycles_max;
 	static uint16_t cpu_cycles_total;
@@ -177,7 +172,6 @@ protected:
 	friend void software_isr(void);
 	friend class AudioConnection;
 	uint8_t numConnections;
-	static uint32_t isr_count;
 private:
 	AudioConnection *destination_list;
 	audio_block_t **inputQueue;
