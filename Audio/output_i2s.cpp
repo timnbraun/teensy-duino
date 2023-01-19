@@ -28,6 +28,11 @@
 #include "output_i2s.h"
 #include "memcpy_audio.h"
 
+#if !defined(dbg)
+#define dbg(...) \
+	fiprintf(stderr, __VA_ARGS__)
+#endif
+
 #if !defined(KINETISL)
 audio_block_t * AudioOutputI2S::block_left_1st = NULL;
 audio_block_t * AudioOutputI2S::block_right_1st = NULL;
@@ -59,7 +64,7 @@ uint32_t AudioOutputI2S::isrCount() { return ::isr_count; }
 
 void AudioOutputI2S::begin(void)
 {
-	dbg("AudioOutputI2S::begin()\r\n");
+	dbg("AudioOutputI2S::begin()\n");
 
 	memset(i2s_tx_buffer, 0, sizeof( i2s_tx_buffer ) );
 #if !defined(KINETISL)
@@ -143,7 +148,7 @@ void AudioOutputI2S::begin(void)
 	I2S0_TCSR = I2S_TCSR_SR;
 	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FWDE;
 
-	dbg("AudioOutputI2S::begin()\r\n");
+	dbg("AudioOutputI2S::begin()\n");
 
 #elif defined(__IMXRT1062__)
 	CORE_PIN7_CONFIG  = 3;  //1:TX_DATA0
