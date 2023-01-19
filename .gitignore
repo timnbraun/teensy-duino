@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# Editor cruft
+*.swp
+
 # Compiled Object files
 *.slo
 *.lo
