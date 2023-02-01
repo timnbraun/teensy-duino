@@ -29,8 +29,7 @@
 #include "memcpy_audio.h"
 
 #if !defined(dbg)
-#define dbg(...) \
-	fiprintf(stderr, __VA_ARGS__)
+#define dbg(...)
 #endif
 
 #if !defined(KINETISL)
@@ -148,7 +147,7 @@ void AudioOutputI2S::begin(void)
 	I2S0_TCSR = I2S_TCSR_SR;
 	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FWDE;
 
-	dbg("AudioOutputI2S::begin()\n");
+	dbg("AudioOutputI2S::begin() KINETISL\n");
 
 #elif defined(__IMXRT1062__)
 	CORE_PIN7_CONFIG  = 3;  //1:TX_DATA0

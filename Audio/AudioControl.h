@@ -27,13 +27,6 @@
 #ifndef AudioControl_h_
 #define AudioControl_h_
 
-#include <stdint.h>
-
-#if !defined(dbg)
-#define dbg(...) \
-	fiprintf(stderr, __VA_ARGS__)
-#endif
-
 // A base class for all Codecs, DACs and ADCs, so at least the
 // most basic functionality is consistent.
 
