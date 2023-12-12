@@ -231,6 +231,7 @@ audio_block_t * AudioOutputUSB::left_2nd;
 audio_block_t * AudioOutputUSB::right_1st;
 audio_block_t * AudioOutputUSB::right_2nd;
 uint16_t AudioOutputUSB::offset_1st;
+uint32_t AudioOutputUSB::isr_count = 0;
 
 
 uint16_t usb_audio_transmit_buffer[AUDIO_TX_SIZE/2] DMABUFATTR;
@@ -345,6 +346,7 @@ unsigned int usb_audio_transmit_callback(void)
 
 		copy_from_buffers((uint32_t *)usb_audio_transmit_buffer + len,
 			left->data + offset, right->data + offset, num);
+		AudioOutputUSB::isr_count += num;
 		len += num;
 		offset += num;
 		if (offset >= AUDIO_BLOCK_SAMPLES) {

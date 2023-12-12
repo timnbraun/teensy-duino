@@ -91,6 +91,7 @@ public:
 	AudioOutputUSB(void) : AudioStream(2, inputQueueArray) { begin(); }
 	virtual void update(void);
 	void begin(void);
+	inline static uint32_t isrCount() { return isr_count; };
 	friend unsigned int usb_audio_transmit_callback(void);
 private:
 	static bool update_responsibility;
@@ -99,6 +100,7 @@ private:
 	static audio_block_t *right_1st;
 	static audio_block_t *right_2nd;
 	static uint16_t offset_1st;
+	static uint32_t isr_count;
 	audio_block_t *inputQueueArray[2];
 };
 
