@@ -1,5 +1,5 @@
-#!/usr/bin/env python3.8
-""" midi_kick.py
+#!/usr/bin/env python3.8.exe
+""" enumSerial.py
 
 example of midi output.
 
@@ -74,7 +74,7 @@ def find_id(target='Teensy MIDI'):
 	for d in range( get_count() ):
 		(interf, name, input, out, op) = get_device_info(d)
 		name = str(object=name, encoding='utf-8')
-		if (name == 'Teensy MIDI' and out == 1):
+		if (name.startswith( target ) and out == 1):
 			return d
 	quit()
 	return None
